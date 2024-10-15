@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 import styled from '@emotion/styled'
 import Box from '@mui/material/Box'
@@ -9,6 +9,8 @@ import ListItemText from '@mui/material/ListItemText'
 import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
+
+import { useChat } from 'ai/react'
 
 import { ScrollArea } from '@/components/ScrollArea'
 
@@ -24,9 +26,20 @@ const StyledPaper = styled(Paper)`
 `
 
 export default function Page({ params }: { params: { contactId: string } }) {
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    keepLastMessageOnError: true
+  })
+
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
   const toggleSearch = () => setIsOpen(!isOpen)
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages])
 
   return (
     <div className='w-full bg-[#F8F7FA]'>
@@ -82,43 +95,48 @@ export default function Page({ params }: { params: { contactId: string } }) {
         </div>
       </Box>
       <Box className='bg-[#F8F7FA]'>
-        <ScrollArea className='h-[410px] px-5'>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
-          <h1>Message</h1>
+        <ScrollArea className='h-[410px] p-5'>
+          {messages.map(message => (
+            <div className={`mb-6 flex ${message.role === 'user' ? 'flex-row-reverse' : ''}`} key={message.id}>
+              <Avatar
+                alt='Gawin Griffith'
+                src='/images/avatars/5.png'
+                className={`cursor-pointer bs-[38px] is-[38px] ml-1 ${message.role === 'assistant' ? 'mr-4' : 'ml-4'}`}
+              />
+              <div
+                className={`rounded-lg px-4 py-2 ${message.role === 'assistant' ? 'bg-white rounded-tl-none' : 'bg-primary text-white rounded-tr-none'}`}
+              >
+                {message.content}
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
         </ScrollArea>
       </Box>
-      <StyledPaper className='flex'>
-        <div className='flex-grow'>
-          <input
-            className='w-full h-full pl-4 pr-2 py-2 focus:outline-none focus:ring-0 text-[15px]'
-            type='text'
-            placeholder='Type your message...'
-          />
-        </div>
-        <div className='h-full flex items-center mr-2 gap-x-3'>
-          <div className='flex cursor-pointer hover:rounded-full hover:bg-gray-100 p-2'>
-            <i className='tabler-microphone w-[22px] h-[22px] text-gray-500'></i>
+      <form onSubmit={handleSubmit}>
+        <StyledPaper className='flex'>
+          <div className='flex-grow'>
+            <input
+              className='w-full h-full pl-4 pr-2 py-2 focus:outline-none focus:ring-0 text-[15px]'
+              type='text'
+              placeholder='Type your message...'
+              value={input}
+              onChange={handleInputChange}
+            />
           </div>
-          <div className='flex cursor-pointer hover:rounded-full hover:bg-gray-100 p-2'>
-            <i className='tabler-paperclip w-[22px] h-[22px] text-gray-500'></i>
+          <div className='h-full flex items-center mr-2 gap-x-3'>
+            <div className='flex cursor-pointer hover:rounded-full hover:bg-gray-100 p-2'>
+              <i className='tabler-microphone w-[22px] h-[22px] text-gray-500'></i>
+            </div>
+            <div className='flex cursor-pointer hover:rounded-full hover:bg-gray-100 p-2'>
+              <i className='tabler-paperclip w-[22px] h-[22px] text-gray-500'></i>
+            </div>
+            <Button type='submit' variant='contained' endIcon={<i className='tabler-send'></i>}>
+              Send
+            </Button>
           </div>
-          <Button variant='contained' endIcon={<i className='tabler-send'></i>}>
-            Send
-          </Button>
-        </div>
-      </StyledPaper>
+        </StyledPaper>
+      </form>
     </div>
   )
 }
