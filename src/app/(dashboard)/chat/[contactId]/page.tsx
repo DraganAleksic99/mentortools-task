@@ -10,7 +10,11 @@ import ListItemAvatar from '@mui/material/ListItemAvatar'
 import Paper from '@mui/material/Paper'
 import Button from '@mui/material/Button'
 
+import KeyboardArrowUp from '@mui/icons-material/KeyboardArrowUp'
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown'
+
 import { useChat } from 'ai/react'
+import { type Message } from 'ai'
 
 import { ScrollArea } from '@/components/ScrollArea'
 
@@ -25,21 +29,85 @@ const StyledPaper = styled(Paper)`
   overflow: hidden;
 `
 
-export default function Page({ params }: { params: { contactId: string } }) {
+interface ExtendedMessage extends Message {
+  scrollId: number
+}
+
+export default function Page() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
-    keepLastMessageOnError: true
+    keepLastMessageOnError: true,
+    onFinish(message) {
+      ;(message as ExtendedMessage).scrollId = messages.length - 1
+    }
   })
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const messageRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const toggleSearch = () => setIsOpen(!isOpen)
+
+  const highlightSearchTerm = (text: string, term: string) => {
+    if (!term.trim()) return text
+
+    const regex = new RegExp(`(${term})`, 'gi')
+
+    return text.split(regex).map((part, index) =>
+      regex.test(part) ? (
+        <span key={index} className='bg-yellow-200'>
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    )
+  }
+
+  const matchingMessages = messages.filter(message => message.content.toLowerCase().includes(searchTerm.toLowerCase()))
+
+  const scrollToMessage = (index: number) => {
+    if (matchingMessages.length > 0) {
+      const messageId = (matchingMessages[index] as ExtendedMessage).scrollId
+      const messageElement = messageRefs.current[messageId - 1]
+
+      if (messageElement && scrollAreaRef.current) {
+        messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  }
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
+
+    if (messages && messages.length !== 0) {
+      ;(messages[messages.length - 1] as ExtendedMessage).scrollId = messages.length
+    }
   }, [messages])
+
+  useEffect(() => {
+    if (searchTerm && matchingMessages.length > 0) {
+      setCurrentMatchIndex(0)
+      scrollToMessage(0)
+    }
+    // eslint-disable-next-line
+  }, [searchTerm])
+
+  const handleNavigation = (direction: 'up' | 'down') => {
+    if (matchingMessages.length > 0) {
+      const newIndex =
+        direction === 'up'
+          ? (currentMatchIndex - 1 + matchingMessages.length) % matchingMessages.length
+          : (currentMatchIndex + 1) % matchingMessages.length
+
+      setCurrentMatchIndex(newIndex)
+      scrollToMessage(newIndex)
+    }
+  }
 
   return (
     <div className='w-full bg-[#F8F7FA]'>
@@ -71,10 +139,25 @@ export default function Page({ params }: { params: { contactId: string } }) {
                 type='text'
                 placeholder='Search...'
                 className={`w-40 h-[22px] pl-1 ml-1 mr-11 focus:outline-none focus:ring-0 border border-gray-500 rounded-sm transition-all duration-500 ease-in-out ${isOpen ? 'visible' : 'invisible'}`}
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
               />
+              {isOpen && searchTerm && (
+                <p className='absolute left-2 top-[26px] text-sm text-gray-500'>
+                  {matchingMessages.length > 0
+                    ? `Showing ${currentMatchIndex + 1} of ${matchingMessages.length} matches`
+                    : 'No matches found'}
+                </p>
+              )}
               {isOpen && (
                 <div className='absolute right-0 flex h-fit items-center cursor-pointer hover:rounded-full hover:bg-gray-100 p-2'>
-                  <i className='tabler-x w-[22px] h-[22px] text-gray-500' onClick={toggleSearch}></i>
+                  <i
+                    className='tabler-x w-[22px] h-[22px] text-gray-500'
+                    onClick={() => {
+                      toggleSearch()
+                      setSearchTerm('')
+                    }}
+                  ></i>
                 </div>
               )}
             </div>
@@ -94,10 +177,26 @@ export default function Page({ params }: { params: { contactId: string } }) {
           </div>
         </div>
       </Box>
-      <Box className='bg-[#F8F7FA]'>
-        <ScrollArea className='h-[410px] p-5'>
-          {messages.map(message => (
-            <div className={`mb-6 flex ${message.role === 'user' ? 'flex-row-reverse' : ''}`} key={message.id}>
+      <Box className='bg-[#F8F7FA] relative'>
+        {searchTerm && matchingMessages.length > 1 && (
+          <div className='absolute right-5 bottom-5 flex flex-col gap-2 z-10'>
+            <button className='cursor-pointer w-10 h-10 rounded-lg' onClick={() => handleNavigation('up')}>
+              <KeyboardArrowUp fontSize='large' />
+            </button>
+            <button className='cursor-pointer w-10 h-10 rounded-lg' onClick={() => handleNavigation('down')}>
+              <KeyboardArrowDown fontSize='large' />
+            </button>
+          </div>
+        )}
+        <ScrollArea className='h-[410px] px-5' ref={scrollAreaRef}>
+          {messages.map((message, index) => (
+            <div
+              className={`first:pt-5 mb-6 flex ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+              key={message.id}
+              ref={el => {
+                messageRefs.current[index] = el
+              }}
+            >
               <Avatar
                 alt='Gawin Griffith'
                 src='/images/avatars/5.png'
@@ -106,7 +205,7 @@ export default function Page({ params }: { params: { contactId: string } }) {
               <div
                 className={`rounded-lg px-4 py-2 ${message.role === 'assistant' ? 'bg-white rounded-tl-none' : 'bg-primary text-white rounded-tr-none'}`}
               >
-                {message.content}
+                {highlightSearchTerm(message.content, searchTerm)}
               </div>
             </div>
           ))}
