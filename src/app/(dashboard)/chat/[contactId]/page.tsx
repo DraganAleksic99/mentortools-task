@@ -47,6 +47,7 @@ export default function Page() {
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const messageRefs = useRef<(HTMLDivElement | null)[]>([])
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const toggleSearch = () => setIsOpen(!isOpen)
 
@@ -136,6 +137,7 @@ export default function Page() {
               className={`relative flex items-center transition-all duration-500 ease-in-out ${isOpen ? 'w-full opacity-100' : 'w-0 opacity-0'}`}
             >
               <input
+                ref={inputRef}
                 type='text'
                 placeholder='Search...'
                 className={`w-40 h-[22px] pl-1 ml-1 mr-11 focus:outline-none focus:ring-0 border border-gray-500 rounded-sm transition-all duration-500 ease-in-out ${isOpen ? 'visible' : 'invisible'}`}
@@ -164,7 +166,15 @@ export default function Page() {
             {!isOpen && (
               <div
                 className='flex h-fit items-center cursor-pointer hover:rounded-full hover:bg-gray-100 p-2'
-                onClick={toggleSearch}
+                onClick={() => {
+                  toggleSearch()
+
+                  if (inputRef.current) {
+                    setTimeout(() => {
+                      inputRef.current!.focus()
+                    }, 500)
+                  }
+                }}
               >
                 <i className='tabler-search w-[22px] h-[22px] text-gray-500'></i>
               </div>
