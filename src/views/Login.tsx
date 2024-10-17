@@ -1,10 +1,12 @@
 'use client'
 
 // React Imports
+import type { FormEvent } from 'react'
 import { useState } from 'react'
 
-// Next Imports
 import { useRouter } from 'next/navigation'
+
+// Next Imports
 
 // MUI Imports
 import useMediaQuery from '@mui/material/useMediaQuery'
@@ -19,6 +21,8 @@ import Divider from '@mui/material/Divider'
 
 // Third-party Imports
 import classnames from 'classnames'
+
+import { authenticate } from '@/app/lib/actions'
 
 // Type Imports
 import type { SystemMode } from '@core/types'
@@ -62,6 +66,10 @@ const MaskImg = styled('img')({
 const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isPending, setIsPending] = useState(false)
+  const [error, setError] = useState('')
 
   // Vars
   const darkImg = '/images/pages/auth-mask-dark.png'
@@ -87,6 +95,33 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
   )
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+
+    if (!email || !password) return
+
+    setError('')
+    setIsPending(true)
+
+    const data = new FormData()
+
+    email && data.append('email', email)
+    email && data.append('password', password)
+
+    const error = await authenticate(data)
+
+    if (error) {
+      setError(error)
+      setIsPending(false)
+
+      return
+    }
+
+    setIsPending(false)
+    setError('')
+    router.push('/chat')
+  }
 
   return (
     <div className='flex bs-full justify-center'>
@@ -116,17 +151,18 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
             <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}! 👋🏻`}</Typography>
             <Typography>Please sign-in to your account and start the adventure</Typography>
           </div>
-          <form
-            noValidate
-            autoComplete='off'
-            onSubmit={e => {
-              e.preventDefault()
-              router.push('/')
-            }}
-            className='flex flex-col gap-5'
-          >
-            <CustomTextField autoFocus fullWidth label='Email or Username' placeholder='Enter your email or username' />
+          <form onSubmit={handleSubmit} noValidate autoComplete='off' className='flex flex-col gap-5'>
             <CustomTextField
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              autoFocus
+              fullWidth
+              label='Email'
+              placeholder='Enter your email'
+            />
+            <CustomTextField
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               fullWidth
               label='Password'
               placeholder='············'
@@ -142,13 +178,18 @@ const LoginV2 = ({ mode }: { mode: SystemMode }) => {
                 )
               }}
             />
+            {error && (
+              <div className='text-red-600'>
+                <p>{error}</p>
+              </div>
+            )}
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <FormControlLabel control={<Checkbox />} label='Remember me' />
               <Typography className='text-end' color='primary' component={Link}>
                 Forgot password?
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit'>
+            <Button fullWidth variant='contained' type='submit' disabled={isPending}>
               Login
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>

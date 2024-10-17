@@ -21,6 +21,8 @@ import ScrollToTop from '@core/components/scroll-to-top'
 // Util Imports
 import { getMode, getSystemMode } from '@core/utils/serverHelpers'
 
+export const dynamic = 'force-dynamic'
+
 const Layout = async ({ children }: ChildrenType) => {
   // Vars
   const direction = 'ltr'

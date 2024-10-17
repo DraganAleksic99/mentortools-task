@@ -23,6 +23,7 @@ import Button from '@mui/material/Button'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
+import { signout } from '@/app/lib/actions'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -60,11 +61,6 @@ const UserDropdown = () => {
     }
 
     setOpen(false)
-  }
-
-  const handleUserLogout = async () => {
-    // Redirect to login page
-    router.push('/login')
   }
 
   return (
@@ -129,17 +125,19 @@ const UserDropdown = () => {
                     <Typography color='text.primary'>FAQ</Typography>
                   </MenuItem>
                   <div className='flex items-center plb-2 pli-3'>
-                    <Button
-                      fullWidth
-                      variant='contained'
-                      color='error'
-                      size='small'
-                      endIcon={<i className='tabler-logout' />}
-                      onClick={handleUserLogout}
-                      sx={{ '& .MuiButton-endIcon': { marginInlineStart: 1.5 } }}
-                    >
-                      Logout
-                    </Button>
+                    <form className='ml-4' action={signout}>
+                      <Button
+                        type='submit'
+                        fullWidth
+                        variant='contained'
+                        color='error'
+                        size='small'
+                        endIcon={<i className='tabler-logout' />}
+                        sx={{ '& .MuiButton-endIcon': { marginInlineStart: 1.5 } }}
+                      >
+                        Logout
+                      </Button>
+                    </form>
                   </div>
                 </MenuList>
               </ClickAwayListener>
