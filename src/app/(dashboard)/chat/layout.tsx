@@ -161,7 +161,7 @@ export default function Layout({ children }: PropsWithChildren) {
                   <Avatar
                     alt='Gawin Griffith'
                     src='/images/avatars/5.png'
-                    className='cursor-pointer bs-[38px] is-[38px] ml-1'
+                    className='cursor-pointer bs-[40px] is-[40px] ml-1 mr-1'
                   />
                 </ListItemAvatar>
                 <ListItemText
@@ -183,7 +183,7 @@ export default function Layout({ children }: PropsWithChildren) {
                   <Avatar
                     alt='Harriet McBride'
                     src='/images/avatars/2.png'
-                    className='cursor-pointer bs-[38px] is-[38px] ml-1'
+                    className='cursor-pointer bs-[40px] is-[40px] ml-1 mr-1'
                   />
                 </ListItemAvatar>
                 <ListItemText
@@ -198,7 +198,7 @@ export default function Layout({ children }: PropsWithChildren) {
                 />
               </ListItem>
             </Link>
-            <h3 className='py-2 mb-1 mt-2 ml-7 text-primary'>Contacts</h3>
+            <h3 className='py-2 mb-1 mt-3 ml-7 text-primary'>Contacts</h3>
             {contacts.map(contact => (
               <Link key={contact.id} href={`/chat/${contact.id}`}>
                 <ListItem
@@ -208,7 +208,7 @@ export default function Layout({ children }: PropsWithChildren) {
                     <Avatar
                       alt={contact.name}
                       src={`/images/avatars/${contact.img}`}
-                      className='cursor-pointer bs-[38px] is-[38px] ml-1'
+                      className='cursor-pointer bs-[40px] is-[40px] ml-1 mr-1'
                     />
                   </ListItemAvatar>
                   <ListItemText
